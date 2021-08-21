@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class Player : MonoBehaviour
     private bool _canDoubleJump = false;
     [SerializeField] private int _coins;
     private UIManager _uIManager;
+    private int _lives = 3;
 
     void Start()
     {
@@ -21,6 +23,8 @@ public class Player : MonoBehaviour
         {
             Debug.LogError("UIManager null in Player");
         }
+        _uIManager.UpdateCoinsDisplay(_coins);
+        _uIManager.UpdateLivesDisplay(_lives);
     }
 
     void Update()
@@ -28,31 +32,47 @@ public class Player : MonoBehaviour
         float horizontalInput = Input.GetAxis("Horizontal");
         Vector3 direction = new Vector3(horizontalInput, 0, 0);
         Vector3 velocity = direction * _speed;
-
-        if(_controller.isGrounded)
+        if(_controller.enabled == true)
         {
-            if(Input.GetKeyDown(KeyCode.Space))
+            if (_controller.isGrounded)
             {
-                _yVelocity = _jump;
-                _canDoubleJump = true;
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    _yVelocity = _jump;
+                    _canDoubleJump = true;
+                }
             }
-        }
-        else
-        {
-            if(Input.GetKeyDown(KeyCode.Space) && _canDoubleJump)
+            else
             {
-                _yVelocity += _jump;
-                _canDoubleJump = false;
+                if (Input.GetKeyDown(KeyCode.Space) && _canDoubleJump)
+                {
+                    _yVelocity += _jump;
+                    _canDoubleJump = false;
+                }
+                _yVelocity -= _gravity;
             }
-            _yVelocity -= _gravity;
+            velocity.y = _yVelocity;
+            _controller.Move(velocity * Time.deltaTime);
         }
-        velocity.y = _yVelocity;
-        _controller.Move(velocity * Time.deltaTime);
     }
 
     public void AddCoins()
     {
         _coins++;
         _uIManager.UpdateCoinsDisplay(_coins);
+    }
+
+    public void UpdateLives(int lives)
+    {
+        _lives += lives;
+
+        if (_lives < 1 )
+        {
+            SceneManager.LoadScene(0);
+        }
+        else
+        {
+            _uIManager.UpdateLivesDisplay(_lives);
+        }
     }
 }
